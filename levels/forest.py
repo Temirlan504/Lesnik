@@ -4,10 +4,12 @@ from entities.player import Player
 from ui.dialogue import DialogueBox
 from ui.pause_menu import PauseMenu
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
+from map_loader import Map
 
 class Forest:
     def __init__(self, screen):
         self.screen = screen
+        self.map = Map("assets/maps/forest.tmx")
         self.font = pygame.font.SysFont("Arial", 24)
         self.bg_color = ("black")
 
@@ -64,6 +66,9 @@ class Forest:
         # Background
         self.screen.fill(self.bg_color)
 
+        # Draw map
+        self.map.draw(self.screen)
+
         # Draw player
         self.player_group.draw(self.screen)
 
@@ -75,3 +80,4 @@ class Forest:
 
         # Fade overlay
         self.fade.draw()
+        

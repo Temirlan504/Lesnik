@@ -13,3 +13,5 @@ ENV/
 .vscode/
 .idea/
 *.swp
+
+assets/
