@@ -16,8 +16,22 @@ class Forest:
         self.fade = Fade(screen, mode="in", speed=1)
 
         # Player setup
-        self.player = Player((SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+        # Start player somewhere on the map (not just center of screen)
+        # --- Player setup ---
+        player_obj = self.map.get_object("Player")
+        if player_obj:
+            self.player = Player((0, 0))
+            self.player.rect.centerx = int(player_obj.x * self.map.scale_x)
+            self.player.rect.centery = int(player_obj.y * self.map.scale_y)
+
+        else:
+            print("⚠️ Warning: No player object found in map! Defaulting to center.")
+            self.player = Player((self.map.width // 2, self.map.height // 2))
+
         self.player_group = pygame.sprite.GroupSingle(self.player)
+
+        # Camera setup
+        self.camera_offset = pygame.Vector2(0, 0)
 
         # Dialogue setup
         self.dialogue = DialogueBox(
@@ -46,7 +60,7 @@ class Forest:
             elif action == "Main menu":
                 self.fade.start("out", speed=12)
                 self._wants_return_menu = True
-                self.pause_menu.toggle()  # close menu immediately
+                self.pause_menu.toggle()
             elif action == "Exit":
                 return "_quit"
 
@@ -54,30 +68,38 @@ class Forest:
         if not self.dialogue.active:
             self.player.update(keys)
 
-        # Update dialogue first
         self.dialogue.update(events)
+
+        # Update camera to follow player
+        self.update_camera()
 
         if getattr(self, "_wants_return_menu", False) and not self.fade.active:
             return "menu"
 
         return None
 
+    def update_camera(self):
+        # Center camera on player
+        self.camera_offset.x = self.player.rect.centerx - SCREEN_WIDTH // 2
+        self.camera_offset.y = self.player.rect.centery - SCREEN_HEIGHT // 2
+
+        # Clamp camera to map boundaries
+        self.camera_offset.x = max(0, min(self.camera_offset.x, self.map.width - SCREEN_WIDTH))
+        self.camera_offset.y = max(0, min(self.camera_offset.y, self.map.height - SCREEN_HEIGHT))
+
     def draw(self):
-        # Background
         self.screen.fill(self.bg_color)
 
-        # Draw map
-        self.map.draw(self.screen)
+        # Draw map with camera offset
+        self.map.draw(self.screen, camera_offset=self.camera_offset)
 
-        # Draw player
-        self.player_group.draw(self.screen)
+        # Draw player relative to camera
+        for sprite in self.player_group:
+            offset_rect = sprite.rect.copy()
+            offset_rect.topleft -= self.camera_offset
+            self.screen.blit(sprite.image, offset_rect)
 
-        # Dialogue
+        # Dialogue & UI
         self.dialogue.draw()
-
-        # Draw pause menu
         self.pause_menu.draw()
-
-        # Fade overlay
         self.fade.draw()
-        

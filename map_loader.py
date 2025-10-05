@@ -16,31 +16,32 @@ class Map:
         self.width = self.tmx_data.width * TILE_SIZE
         self.height = self.tmx_data.height * TILE_SIZE
 
-    def draw(self, surface):
-        """Draw all visible layers (tiles + objects)"""
+    def draw(self, surface, camera_offset=(0, 0)):
+        """Draw all visible layers (tiles + objects) with camera offset"""
+        offset_x, offset_y = camera_offset
+
         for layer in self.tmx_data.visible_layers:
-            # Tile layers
             if isinstance(layer, pytmx.TiledTileLayer):
                 for x, y, image in layer.tiles():
                     if image:
                         image = pygame.transform.scale(
-                            image, (int(self.tile_width * self.scale_x), int(self.tile_height * self.scale_y))
+                            image,
+                            (int(self.tile_width * self.scale_x), int(self.tile_height * self.scale_y))
                         )
-                        surface.blit(image, (x * TILE_SIZE, y * TILE_SIZE))
+                        surface.blit(image, (x * TILE_SIZE - offset_x, y * TILE_SIZE - offset_y))
 
-            # Object layers
             elif isinstance(layer, pytmx.TiledObjectGroup):
                 for obj in layer:
                     if hasattr(obj, "image") and obj.image:
                         image = pygame.transform.scale(
-                            obj.image, (int(obj.width * self.scale_x), int(obj.height * self.scale_y))
+                            obj.image,
+                            (int(obj.width * self.scale_x), int(obj.height * self.scale_y))
                         )
-                        surface.blit(image, (obj.x * self.scale_x, obj.y * self.scale_y))
+                        surface.blit(image, (obj.x * self.scale_x - offset_x, obj.y * self.scale_y - offset_y))
                     else:
-                        # placeholder rectangle
                         rect = pygame.Rect(
-                            obj.x * self.scale_x,
-                            obj.y * self.scale_y,
+                            obj.x * self.scale_x - offset_x,
+                            obj.y * self.scale_y - offset_y,
                             obj.width * self.scale_x,
                             obj.height * self.scale_y
                         )
