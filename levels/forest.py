@@ -90,16 +90,41 @@ class Forest:
     def draw(self):
         self.screen.fill(self.bg_color)
 
-        # Draw map with camera offset
+        # Draw the map background (e.g., ground layers only)
+        # We'll skip top layers for now and add entities later
         self.map.draw(self.screen, camera_offset=self.camera_offset)
 
-        # Draw player relative to camera
-        for sprite in self.player_group:
-            offset_rect = sprite.rect.copy()
-            offset_rect.topleft -= self.camera_offset
-            self.screen.blit(sprite.image, offset_rect)
+        # --- Depth-sorted entities ---
+        drawables = []
 
-        # Dialogue & UI
+        # Add the player
+        offset_player_rect = self.player.rect.copy()
+        offset_player_rect.topleft -= self.camera_offset
+        drawables.append((self.player.image, offset_player_rect.bottom, offset_player_rect))
+
+        # Add map objects that can overlap (trees, buildings, etc.)
+        for obj in self.map.tmx_data.objects:
+            if hasattr(obj, "image") and obj.image:
+                image = pygame.transform.scale(
+                    obj.image,
+                    (int(obj.width * self.map.scale_x), int(obj.height * self.map.scale_y))
+                )
+                obj_rect = pygame.Rect(
+                    obj.x * self.map.scale_x - self.camera_offset.x,
+                    obj.y * self.map.scale_y - self.camera_offset.y,
+                    obj.width * self.map.scale_x,
+                    obj.height * self.map.scale_y
+                )
+                drawables.append((image, obj_rect.bottom, obj_rect))
+
+        # Sort all drawables by their bottom edge
+        drawables.sort(key=lambda d: d[1])
+
+        # Draw them in order
+        for image, _, rect in drawables:
+            self.screen.blit(image, rect)
+
+        # Dialogue, UI, and fade overlay
         self.dialogue.draw()
         self.pause_menu.draw()
         self.fade.draw()
