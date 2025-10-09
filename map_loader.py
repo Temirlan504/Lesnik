@@ -15,6 +15,26 @@ class Map:
         # Optional: map dimensions (for camera, bounds, etc.)
         self.width = self.tmx_data.width * TILE_SIZE
         self.height = self.tmx_data.height * TILE_SIZE
+        
+        # ✅ Build collision rects once during initialization
+        self.collision_rects = self.get_collision_rects()
+
+    def get_collision_rects(self):
+        """Extract all collision rectangles from the map"""
+        collision_rects = []
+        
+        for obj in self.tmx_data.objects:
+            # Check if this object is a collision object
+            if obj.name == "Collision" or obj.type == "Collision":
+                rect = pygame.Rect(
+                    obj.x * self.scale_x,
+                    obj.y * self.scale_y,
+                    obj.width * self.scale_x,
+                    obj.height * self.scale_y
+                )
+                collision_rects.append(rect)
+        
+        return collision_rects
 
     def draw(self, surface, camera_offset=(0, 0)):
         """Draw all visible layers (tiles + objects) with camera offset"""
@@ -32,6 +52,10 @@ class Map:
 
             elif isinstance(layer, pytmx.TiledObjectGroup):
                 for obj in layer:
+                    # ✅ Skip collision objects - don't draw them
+                    if obj.name == "Collision" or obj.type == "Collision":
+                        continue
+                    
                     if hasattr(obj, "image") and obj.image:
                         image = pygame.transform.scale(
                             obj.image,
@@ -47,10 +71,10 @@ class Map:
                         )
                         pygame.draw.rect(surface, (255, 0, 0), rect, 1)
 
-
     def get_object(self, name):
         """Helper to get object by name"""
         for obj in self.tmx_data.objects:
             if obj.name == name:
                 return obj
         return None
+    

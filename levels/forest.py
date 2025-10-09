@@ -1,5 +1,5 @@
 import pygame
-from utils import Fade
+from utils.fade import Fade
 from entities.player import Player
 from ui.dialogue import DialogueBox
 from ui.pause_menu import PauseMenu
@@ -15,15 +15,12 @@ class Forest:
 
         self.fade = Fade(screen, mode="in", speed=1)
 
-        # Player setup
-        # Start player somewhere on the map (not just center of screen)
         # --- Player setup ---
         player_obj = self.map.get_object("Player")
         if player_obj:
             self.player = Player((0, 0))
             self.player.rect.centerx = int(player_obj.x * self.map.scale_x)
             self.player.rect.centery = int(player_obj.y * self.map.scale_y)
-
         else:
             print("⚠️ Warning: No player object found in map! Defaulting to center.")
             self.player = Player((self.map.width // 2, self.map.height // 2))
@@ -64,19 +61,41 @@ class Forest:
             elif action == "Exit":
                 return "_quit"
 
-        # Freeze player during dialogue
+        # --- Player movement with collisions ---
         if not self.dialogue.active:
-            self.player.update(keys)
+            dx, dy = self.player.get_movement(keys)
+            self.move_player(dx, dy)  # ✅ use our new collision-aware movement
 
         self.dialogue.update(events)
-
-        # Update camera to follow player
         self.update_camera()
 
         if getattr(self, "_wants_return_menu", False) and not self.fade.active:
             return "menu"
 
         return None
+
+    # ✅ NEW METHOD: Handle movement & collisions
+    def move_player(self, dx, dy):
+        player = self.player
+        collision_rects = self.map.collision_rects  # Comes from your Tiled map
+
+        # Horizontal movement
+        player.rect.x += dx
+        for rect in collision_rects:
+            if player.rect.colliderect(rect):
+                if dx > 0:  # moving right
+                    player.rect.right = rect.left
+                elif dx < 0:  # moving left
+                    player.rect.left = rect.right
+
+        # Vertical movement
+        player.rect.y += dy
+        for rect in collision_rects:
+            if player.rect.colliderect(rect):
+                if dy > 0:  # moving down
+                    player.rect.bottom = rect.top
+                elif dy < 0:  # moving up
+                    player.rect.top = rect.bottom
 
     def update_camera(self):
         # Center camera on player
@@ -89,15 +108,12 @@ class Forest:
 
     def draw(self):
         self.screen.fill(self.bg_color)
-
-        # Draw the map background (e.g., ground layers only)
-        # We'll skip top layers for now and add entities later
         self.map.draw(self.screen, camera_offset=self.camera_offset)
 
         # --- Depth-sorted entities ---
         drawables = []
 
-        # Add the player
+        # Add player
         offset_player_rect = self.player.rect.copy()
         offset_player_rect.topleft -= self.camera_offset
         drawables.append((self.player.image, offset_player_rect.bottom, offset_player_rect))
@@ -117,14 +133,12 @@ class Forest:
                 )
                 drawables.append((image, obj_rect.bottom, obj_rect))
 
-        # Sort all drawables by their bottom edge
+        # Sort and draw
         drawables.sort(key=lambda d: d[1])
-
-        # Draw them in order
         for image, _, rect in drawables:
             self.screen.blit(image, rect)
 
-        # Dialogue, UI, and fade overlay
+        # Dialogue, UI, fade
         self.dialogue.draw()
         self.pause_menu.draw()
         self.fade.draw()

@@ -1,5 +1,5 @@
 import pygame
-from utils import Fade
+from utils.fade import Fade
 
 class MainMenu:
     def __init__(self, screen):
