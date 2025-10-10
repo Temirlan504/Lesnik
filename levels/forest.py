@@ -1,5 +1,6 @@
 import pygame
 from utils.fade import Fade
+from utils.fog_of_war import FogOfWar
 from entities.player import Player
 from ui.dialogue import DialogueBox
 from ui.pause_menu import PauseMenu
@@ -14,6 +15,13 @@ class Forest:
         self.bg_color = ("black")
 
         self.fade = Fade(screen, mode="in", speed=1)
+
+        self.fog_of_war = FogOfWar(
+            (SCREEN_WIDTH, SCREEN_HEIGHT),
+            light_radius=200,
+            fog_alpha=250,
+            light_gradient=100
+        )
 
         # --- Player setup ---
         player_obj = self.map.get_object("Player")
@@ -74,7 +82,7 @@ class Forest:
 
         return None
 
-    # ✅ NEW METHOD: Handle movement & collisions
+    # Handle movement & collisions
     def move_player(self, dx, dy):
         player = self.player
         collision_rects = self.map.collision_rects  # Comes from your Tiled map
@@ -139,6 +147,7 @@ class Forest:
             self.screen.blit(image, rect)
 
         # Dialogue, UI, fade
+        self.fog_of_war.draw(self.screen, self.player.rect.center, self.camera_offset)
         self.dialogue.draw()
         self.pause_menu.draw()
         self.fade.draw()

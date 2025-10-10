@@ -16,7 +16,7 @@ class Map:
         self.width = self.tmx_data.width * TILE_SIZE
         self.height = self.tmx_data.height * TILE_SIZE
         
-        # ✅ Build collision rects once during initialization
+        # Build collision rects once during initialization
         self.collision_rects = self.get_collision_rects()
 
     def get_collision_rects(self):
