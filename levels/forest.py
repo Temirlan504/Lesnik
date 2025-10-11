@@ -13,6 +13,7 @@ class Forest:
         self.map = Map("assets/maps/forest.tmx")
         self.font = pygame.font.SysFont("Arial", 24)
         self.bg_color = ("black")
+        self.prompt_font = pygame.font.Font(None, 28)
 
         self.fade = Fade(screen, mode="in", speed=1)
 
@@ -20,8 +21,25 @@ class Forest:
             (SCREEN_WIDTH, SCREEN_HEIGHT),
             light_radius=200,
             fog_alpha=250,
-            light_gradient=100
+            light_gradient=10
         )
+
+        # --- Door setup ---
+        door_obj = self.map.get_object("Door")
+        self.door_triggered = False
+        self.show_door_prompt = False
+
+        if door_obj:
+            self.door_rect = pygame.Rect(
+                door_obj.x * self.map.scale_x,
+                door_obj.y * self.map.scale_y,
+                door_obj.width * self.map.scale_x,
+                door_obj.height * self.map.scale_y
+            )
+        else:
+            self.door_rect = None
+            print("⚠️ No Door object found in map.")
+
 
         # --- Player setup ---
         player_obj = self.map.get_object("Player")
@@ -72,15 +90,35 @@ class Forest:
         # --- Player movement with collisions ---
         if not self.dialogue.active:
             dx, dy = self.player.get_movement(keys)
-            self.move_player(dx, dy)  # ✅ use our new collision-aware movement
+            self.move_player(dx, dy)  # use our new collision-aware movement
 
         self.dialogue.update(events)
         self.update_camera()
 
         if getattr(self, "_wants_return_menu", False) and not self.fade.active:
             return "menu"
+        
+        # Check for door interaction
+        if self.door_rect and self.player.rect.colliderect(self.door_rect):
+            if not self.door_triggered:
+                self.dialogue.start([
+                    "This looks like a nice hut.",
+                    "Maybe I can rest there for the night."
+                ])
+                self.door_triggered = True
 
-        return None
+            # show prompt only after dialogue is done
+            elif not self.dialogue.active:
+                self.show_door_prompt = True
+                # check for "E" press to enter
+                if keys[pygame.K_e] and not self.fade.active:
+                    self.fade.start("out", speed=3)
+                    self._wants_transition_hut = True
+        else:
+            self.show_door_prompt = False
+
+        if getattr(self, "_wants_transition_hut", False) and not self.fade.active:
+            return "hut"
 
     # Handle movement & collisions
     def move_player(self, dx, dy):
@@ -151,3 +189,13 @@ class Forest:
         self.dialogue.draw()
         self.pause_menu.draw()
         self.fade.draw()
+
+        # --- Draw door prompt ---
+        if self.show_door_prompt and self.door_rect:
+            prompt_text = self.prompt_font.render("Press E to enter", True, (255, 255, 255))
+            text_rect = prompt_text.get_rect(center=(
+                self.door_rect.centerx,
+                self.door_rect.top - 20  # place slightly above the door
+            ))
+            self.screen.blit(prompt_text, text_rect)
+

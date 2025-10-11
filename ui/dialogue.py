@@ -46,3 +46,14 @@ class DialogueBox:
         arrow_x = self.screen.get_width() - 40
         arrow_y = self.screen.get_height() - 50
         self.screen.blit(arrow_surface, (arrow_x, arrow_y))
+
+    def start(self, text_or_lines):
+        """Start a new dialogue with one or more lines."""
+        if isinstance(text_or_lines, str):
+            self.lines = [text_or_lines]
+        else:
+            self.lines = list(text_or_lines)
+
+        self.current_line = 0
+        self.active = True
+        

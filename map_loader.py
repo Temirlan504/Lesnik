@@ -52,8 +52,8 @@ class Map:
 
             elif isinstance(layer, pytmx.TiledObjectGroup):
                 for obj in layer:
-                    # ✅ Skip collision objects - don't draw them
-                    if obj.name == "Collision" or obj.type == "Collision":
+                    # Skip collision objects - don't draw them
+                    if obj.name in ("Collision", "Door"):
                         continue
                     
                     if hasattr(obj, "image") and obj.image:

@@ -3,6 +3,7 @@ import sys
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from levels.main_menu import MainMenu
 from levels.forest import Forest
+from levels.hut import Hut
 
 class SceneManager:
     def __init__(self, screen):
@@ -10,7 +11,7 @@ class SceneManager:
         self.scene_classes = {
             "menu": MainMenu,
             "forest": Forest,
-            # "hut": Hut,  # later
+            "hut": Hut
         }
         self.current_scene = self.scene_classes["menu"](screen)
         self._should_quit = False
