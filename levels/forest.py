@@ -41,7 +41,7 @@ class Forest:
             print("⚠️ No Door object found in map.")
 
 
-        # --- Player setup ---
+        # --- Player spawn setup ---
         player_obj = self.map.get_object("Player")
         if player_obj:
             self.player = Player((0, 0))
@@ -90,7 +90,7 @@ class Forest:
         # --- Player movement with collisions ---
         if not self.dialogue.active:
             dx, dy = self.player.get_movement(keys)
-            self.move_player(dx, dy)  # use our new collision-aware movement
+            self.player.move_player(dx, dy, self.map.collision_rects)
 
         self.dialogue.update(events)
         self.update_camera()
@@ -120,28 +120,6 @@ class Forest:
         if getattr(self, "_wants_transition_hut", False) and not self.fade.active:
             return "hut"
 
-    # Handle movement & collisions
-    def move_player(self, dx, dy):
-        player = self.player
-        collision_rects = self.map.collision_rects  # Comes from your Tiled map
-
-        # Horizontal movement
-        player.rect.x += dx
-        for rect in collision_rects:
-            if player.rect.colliderect(rect):
-                if dx > 0:  # moving right
-                    player.rect.right = rect.left
-                elif dx < 0:  # moving left
-                    player.rect.left = rect.right
-
-        # Vertical movement
-        player.rect.y += dy
-        for rect in collision_rects:
-            if player.rect.colliderect(rect):
-                if dy > 0:  # moving down
-                    player.rect.bottom = rect.top
-                elif dy < 0:  # moving up
-                    player.rect.top = rect.bottom
 
     def update_camera(self):
         # Center camera on player
@@ -198,4 +176,3 @@ class Forest:
                 self.door_rect.top - 20  # place slightly above the door
             ))
             self.screen.blit(prompt_text, text_rect)
-
