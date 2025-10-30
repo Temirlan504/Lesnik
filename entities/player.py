@@ -15,7 +15,7 @@ class Player(pygame.sprite.Sprite):
             'walk_up': [],
             'walk_down': [],
             'walk_left': [],
-            'walk_right': []
+            'walk_right': [],
         }
         
         # Load animations
@@ -24,6 +24,7 @@ class Player(pygame.sprite.Sprite):
         # Current animation state
         self.direction = 'up'  # up, down, left, right
         self.state = 'idle'  # idle or walk
+        self.is_sitting = False
         self.current_frame = 0
         self.animation_speed = 0.15  # Lower = slower animation
         self.frame_counter = 0
@@ -148,3 +149,13 @@ class Player(pygame.sprite.Sprite):
         
         # Update animation
         self.update_animation()
+
+    def set_sitting(self, sitting: bool):
+        self.is_sitting = sitting
+        if sitting:
+            self.image = pygame.image.load("assets/sprites/player/sitting.png").convert_alpha()
+            self.image = pygame.transform.scale(self.image, (48, 80))
+        else:
+            # Return to idle front or whichever makes sense
+            self.state = "idle_front"
+            self.image = self.animations["idle_front"][0]
