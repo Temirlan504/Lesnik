@@ -171,22 +171,29 @@ class Hut:
                         
                         if choice == "Story 1":
                             self.dialogue.start([
-                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis pretium sapien,",
-                                "nec blandit metus eleifend at. Nulla viverra ex sed risus commodo, eget tincidunt felis dictum.",
-                                "Aliquam erat volutpat. Curabitur ultricies varius justo, a bibendum nunc pretium et."
+                                "Ah, the beasts of this forest... they’ve long since ceased to fear me.",
+                                "In my younger days, I would keep my rifle close, just in case.",
+                                "But as the years went by, I learned their ways, and they learned mine.",
+                                "Now, when the snow is deep and the nights are long, I leave meat at the edge of the woods.",
+                                "The wolves come in silence, take what they need, and leave me in peace. We understand one another."
                             ])
                         elif choice == "Story 2":
                             self.dialogue.start([
-                                "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,",
-                                "totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
-                                "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit."
+                                "On certain nights, the wind carries strange sounds through the pines.",
+                                "It is then that travelers sometimes stumble upon my door — cold, weary, and half-mad from hunger.",
+                                "I welcome them, as any man should. There is always soup on the stove, and a chair by the fire.",
+                                "Yet by dawn, they are gone. The forest calls them back, one way or another.",
+                                "No one truly leaves these woods unchanged."
                             ])
                         elif choice == "Story 3":
                             self.dialogue.start([
-                                "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum",
-                                "deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident,",
-                                "similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga."
+                                "Once, there was a hunter who fancied himself the master of this place.",
+                                "He boasted that no beast could match his aim, nor any man his courage.",
+                                "I warned him, gently, that pride has a way of echoing in the trees.",
+                                "When spring came, I found his hat hanging on a branch — not a mark of blood upon it.",
+                                "Since then, the forest has been quiet, as if content once more."
                             ])
+
                         self.scene_state = "telling_story"
                         print(f"Started {choice}")
 
@@ -198,17 +205,33 @@ class Hut:
                 # All stories heard → wolf event
                 pygame.mixer.music.load("assets/sfx/wolf_howl.mp3")
                 pygame.mixer.music.play()
-
-                self.dialogue.start(["Forgive me, my friend..."])
+                pygame.mixer.music.set_volume(1)
+                self.dialogue.start([
+                    "Suddenly, outside the hut, a chilling howl pierces the air...",
+                    "Forgive me, my friend..."
+                ])
                 self.scene_state = "wolf_event"
                 print("All stories told. Wolf event triggered.")
 
         elif self.scene_state == "wolf_event" and not self.dialogue.active:
-            # Lesnik leaves and returns with rifle
-            rifle_target = (self.lesnik.rect.centerx - 100, self.lesnik.rect.centery)
-            self.lesnik.start_path([rifle_target])
+            # Lesnik leaves and returns with rifle along a proper path
+            # Path: from table → step left → then down → to door (using Tiled marker)
+            door_obj = self.map.get_object("Door")
+
+            if door_obj:
+                door_target = (door_obj.x * self.map.scale_x, door_obj.y * self.map.scale_y)
+            else:
+                print("⚠️ Warning: No 'Door' object found in Tiled map! Using fallback position.")
+                door_target = (self.lesnik.rect.centerx, self.lesnik.rect.centery + 300)
+
+            # Create path: step left to avoid objects, then head to door
+            path_points = [
+                (self.lesnik.rect.centerx - 120, self.lesnik.rect.centery),  # step left from table
+                door_target                                                   # go to the Tiled 'Door' position
+            ]
+
+            self.lesnik.start_path(path_points)
             self.scene_state = "lesnik_fetching_rifle"
-            print("Lesnik left to fetch rifle.")
 
 
         if getattr(self, "_wants_return_menu", False) and not self.fade.active:
