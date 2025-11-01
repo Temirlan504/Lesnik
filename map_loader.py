@@ -69,7 +69,7 @@ class Map:
                             obj.width * self.scale_x,
                             obj.height * self.scale_y
                         )
-                        pygame.draw.rect(surface, (255, 0, 0), rect, 1)
+                        # pygame.draw.rect(surface, (255, 0, 0), rect, 1)
 
     def get_object(self, name):
         """Helper to get object by name"""

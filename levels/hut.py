@@ -18,7 +18,8 @@ class Hut:
 
         self.fade = Fade(screen, mode="in", speed=1)
 
-        self.rifle_sprite = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
+        self.rifle_sprite = pygame.image.load("assets/sprites/lesnik/rifle.png").convert_alpha()
+        self.rifle_sprite = pygame.transform.scale(self.rifle_sprite, (10, 48))
         self.rifle_attached = False
         self.rifle_timer = 0
         self.credits_music_playing = False
@@ -233,12 +234,12 @@ class Hut:
                 # Check if 7 seconds have passed since reaching the door
                 elapsed_at_door = pygame.time.get_ticks() - self.lesnik_at_door_time
                 if elapsed_at_door >= 7000:
-                    # Now spawn him with rifle at door position minus 60 in y
+                    # Now spawn him with rifle at door position minus 70 in y
                     door_obj = self.map.get_object("Door")
                     if door_obj:
-                        return_pos = (door_obj.x * self.map.scale_x, (door_obj.y - 60) * self.map.scale_y)
+                        return_pos = (door_obj.x * self.map.scale_x, (door_obj.y - 70) * self.map.scale_y)
                     else:
-                        return_pos = (self.lesnik.rect.centerx, self.lesnik.rect.centery - 60)
+                        return_pos = (self.lesnik.rect.centerx, self.lesnik.rect.centery - 70)
 
                     self.lesnik.rect.center = return_pos
                     self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
@@ -254,7 +255,12 @@ class Hut:
                     del self.lesnik_at_door_time  # Clean up the timer variable
             
         elif self.scene_state == "lesnik_returned_with_rifle":
-            # Lesnik is just standing there with rifle, waiting for dialogue
+            self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
+            self.lesnik.direction = pygame.Vector2(0, -1)
+            self.lesnik.state = "idle_back"
+            self.lesnik.frame_index = 0
+            self.rifle_attached = True
+
             self.dialogue.start([
                 "Friends want to eat... let's go outside, pal."
             ])
@@ -277,7 +283,7 @@ class Hut:
             self.player.image = pygame.Surface((1, 1), pygame.SRCALPHA)
 
             # Move Lesnik back to table and change to eating sprite
-            table_position = (410 * self.map.scale_x, 140 * self.map.scale_y)
+            table_position = (410 * self.map.scale_x, 120 * self.map.scale_y)
             self.lesnik.rect.center = table_position
             self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_front/0.png").convert_alpha()
             self.lesnik.state = "eating"
@@ -354,6 +360,14 @@ class Hut:
             offset_lesnik_rect.topleft -= self.camera_offset
             drawables.append((self.lesnik.image, offset_lesnik_rect.bottom, offset_lesnik_rect))
 
+            # --- Rifle attachment ---
+            if getattr(self, "rifle_attached", False):
+                rifle_offset = (
+                    offset_lesnik_rect.centerx + 25,  # tweak horizontal offset as needed
+                    offset_lesnik_rect.centery - 20   # tweak vertical offset
+                )
+                self.screen.blit(self.rifle_sprite, rifle_offset)
+
         # Add map objects
         for obj in self.map.tmx_data.objects:
             if hasattr(obj, "image") and obj.image:
@@ -399,13 +413,57 @@ class Hut:
                 text = self.font.render(prefix + option, True, (255, 255, 255))
                 rect = text.get_rect(center=(menu_x, menu_y + i * line_spacing))
                 self.screen.blit(text, rect)
+        
+        # --- Credits cinematic ---
+        if self.scene_state == "credits_scene":
+            # Move camera to right-upper corner
+            cinematic_offset = pygame.Vector2(self.map.width - SCREEN_WIDTH, 0)
 
-        # Credits scene
-        if self.scene_state in ["credits_scene", "credits_scene_init"] and self.credits_font:
+            # Draw map first
+            self.map.draw(self.screen, camera_offset=cinematic_offset)
+
+            # Draw Lesnik below table via depth sort
+            self.rifle_attached = False  # Hide rifle during credits
+            self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_front/0.png").convert_alpha()
+            self.lesnik.image = pygame.transform.scale(self.lesnik.image, (49, 87))
+            drawables = []
+
+            # Collect all map objects again (for depth order)
+            for obj in self.map.tmx_data.objects:
+                if hasattr(obj, "image") and obj.image:
+                    image = pygame.transform.scale(
+                        obj.image,
+                        (int(obj.width * self.map.scale_x), int(obj.height * self.map.scale_y))
+                    )
+                    obj_rect = pygame.Rect(
+                        obj.x * self.map.scale_x - cinematic_offset.x,
+                        obj.y * self.map.scale_y - cinematic_offset.y,
+                        obj.width * self.map.scale_x,
+                        obj.height * self.map.scale_y
+                    )
+                    drawables.append((image, obj_rect.bottom, obj_rect))
+
+            # Add Lesnik with his depth
+            offset_lesnik_rect = self.lesnik.rect.copy()
+            offset_lesnik_rect.topleft -= cinematic_offset
+            drawables.append((self.lesnik.image, offset_lesnik_rect.bottom, offset_lesnik_rect))
+
+            # Sort and draw
+            drawables.sort(key=lambda d: d[1])
+            for image, _, rect in drawables:
+                self.screen.blit(image, rect)
+
+
+            # Draw credits text
             for i, line in enumerate(self.credits_lines):
                 text = self.credits_font.render(line, True, (255, 255, 255))
                 rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 40))
                 self.screen.blit(text, rect)
+
+            # Cinematic letterboxing
+            bar_height = 80
+            pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, SCREEN_WIDTH, bar_height))
+            pygame.draw.rect(self.screen, (0, 0, 0), (0, SCREEN_HEIGHT - bar_height, SCREEN_WIDTH, bar_height))
         
         self.dialogue.draw()
         self.pause_menu.draw()
