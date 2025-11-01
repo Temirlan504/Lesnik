@@ -6,6 +6,7 @@ from ui.dialogue import DialogueBox
 from ui.pause_menu import PauseMenu
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from map_loader import Map
+from settings import FPS
 
 class Hut:
     def __init__(self, screen):
@@ -17,8 +18,16 @@ class Hut:
 
         self.fade = Fade(screen, mode="in", speed=1)
 
+        self.rifle_sprite = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
+        self.rifle_attached = False
+        self.rifle_timer = 0
+        self.credits_music_playing = False
+        self.credits_start_time = 0  # Initialize here
+        self.credits_lines = []  # Initialize here
+        self.credits_font = None  # Initialize here
+
         self.scene_state = "intro_dialogue"
-        self.kitchen_target = (250 * self.map.scale_x, 140 * self.map.scale_y)  # adjust to match your Tiled coordinates
+        self.kitchen_target = (250 * self.map.scale_x, 140 * self.map.scale_y)
         self.lesnik_waiting = False
         self.can_interact_with_chair = False
 
@@ -81,31 +90,23 @@ class Hut:
                 return "_quit"
 
         # Block player movement during dialogue or when sitting
-        # Only allow movement when not in dialogue, sitting, or story scenes
         if (
             not self.dialogue.active
             and self.scene_state not in ["player_sitting", "talking_with_lesnik", "story_choice", "telling_story", "wolf_event"]
         ):
             dx, dy = self.player.get_movement(keys)
             self.player.move_player(dx, dy, self.map.collision_rects)
-        else:
-            # Freeze player (ensure sitting sprite is shown if applicable)
-            if not self.player.set_sitting:
-                self.player.set_sitting(True)
-
 
         self.dialogue.update(events)
         
         # --- Scene progression ---
         if self.scene_state == "intro_dialogue" and not self.dialogue.active:
-            # Dialogue just finished, Lesnik should walk to kitchen
             self.lesnik.start_path([self.kitchen_target])
             self.scene_state = "lesnik_walking_to_kitchen"
             print("Lesnik is walking to the kitchen.")
 
         elif self.scene_state == "lesnik_walking_to_kitchen":
             if not self.lesnik.moving:
-                # Lesnik reached the kitchen
                 self.scene_state = "lesnik_waiting"
                 self.lesnik_waiting = True
                 print("Lesnik is now waiting in the kitchen.")
@@ -116,7 +117,6 @@ class Hut:
         self.can_interact_with_chair = self.lesnik_waiting and self.player_near_chair()
         
         if self.can_interact_with_chair:
-            # Check for interaction key press
             for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
                     self.scene_state = "player_sitting"
@@ -125,21 +125,17 @@ class Hut:
                     # Get chair position to move player to it
                     for obj in self.map.tmx_data.objects:
                         if obj.type.lower() == "chair_interact":
-                            # Position player at the chair
                             self.player.rect.centerx = int(380 * self.map.scale_x)
                             self.player.rect.centery = int(132 * self.map.scale_y)
-                            # when player sits
                             self.player.set_sitting(True)
                             break
                     
-                    # Move Lesnik to table (adjust coordinates to match your table position)
                     table_target = (410 * self.map.scale_x, 120 * self.map.scale_y)
                     self.lesnik.start_path([table_target])
                     print("Player is sitting down. Lesnik is walking to the table.")
         
         # Check if Lesnik reached the table after player sits
         if self.scene_state == "player_sitting" and not self.lesnik.moving:
-            # Make Lesnik face front (down)
             self.lesnik.direction = pygame.Vector2(0, 1)
             self.lesnik.state = "idle_front"
             self.lesnik.frame_index = 0
@@ -151,7 +147,6 @@ class Hut:
         
         # --- Story selection logic ---
         elif self.scene_state == "talking_with_lesnik" and not self.dialogue.active:
-            # Dialogue just finished, show story choices
             self.scene_state = "story_choice"
             self.story_options = ["Story 1", "Story 2", "Story 3"]
             self.selected_option = 0
@@ -171,7 +166,7 @@ class Hut:
                         
                         if choice == "Story 1":
                             self.dialogue.start([
-                                "Ah, the beasts of this forest... they’ve long since ceased to fear me.",
+                                "Ah, the beasts of this forest... they've long since ceased to fear me.",
                                 "In my younger days, I would keep my rifle close, just in case.",
                                 "But as the years went by, I learned their ways, and they learned mine.",
                                 "Now, when the snow is deep and the nights are long, I leave meat at the edge of the woods.",
@@ -199,10 +194,8 @@ class Hut:
 
         elif self.scene_state == "telling_story" and not self.dialogue.active:
             if len(self.stories_heard) < 3:
-                # Go back to choice menu
                 self.scene_state = "story_choice"
             else:
-                # All stories heard → wolf event
                 pygame.mixer.music.load("assets/sfx/wolf_howl.mp3")
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(1)
@@ -214,35 +207,119 @@ class Hut:
                 print("All stories told. Wolf event triggered.")
 
         elif self.scene_state == "wolf_event" and not self.dialogue.active:
-            # Lesnik leaves and returns with rifle along a proper path
-            # Path: from table → step left → then down → to door (using Tiled marker)
             door_obj = self.map.get_object("Door")
-
             if door_obj:
                 door_target = (door_obj.x * self.map.scale_x, door_obj.y * self.map.scale_y)
             else:
-                print("⚠️ Warning: No 'Door' object found in Tiled map! Using fallback position.")
-                door_target = (self.lesnik.rect.centerx, self.lesnik.rect.centery + 300)
+                door_target = (self.lesnik.rect.centerx, self.lesnik.rect.centery + 400)
 
-            # Create path: step left to avoid objects, then head to door
             path_points = [
-                (self.lesnik.rect.centerx - 120, self.lesnik.rect.centery),  # step left from table
-                door_target                                                   # go to the Tiled 'Door' position
+                (self.lesnik.rect.centerx - 120, self.lesnik.rect.centery),
+                door_target
             ]
-
             self.lesnik.start_path(path_points)
+            self.lesnik_leave_time = pygame.time.get_ticks()
             self.scene_state = "lesnik_fetching_rifle"
+            print("Lesnik leaves to fetch rifle.")
+        
+        elif self.scene_state == "lesnik_fetching_rifle":
+            # Wait for Lesnik to finish moving to the door first
+            if not self.lesnik.moving:
+                # Lesnik has reached the door, now start the timer
+                if not hasattr(self, 'lesnik_at_door_time'):
+                    self.lesnik_at_door_time = pygame.time.get_ticks()
+                    print("Lesnik reached the door. Waiting 7 seconds...")
+                
+                # Check if 7 seconds have passed since reaching the door
+                elapsed_at_door = pygame.time.get_ticks() - self.lesnik_at_door_time
+                if elapsed_at_door >= 7000:
+                    # Now spawn him with rifle at door position minus 60 in y
+                    door_obj = self.map.get_object("Door")
+                    if door_obj:
+                        return_pos = (door_obj.x * self.map.scale_x, (door_obj.y - 60) * self.map.scale_y)
+                    else:
+                        return_pos = (self.lesnik.rect.centerx, self.lesnik.rect.centery - 60)
+
+                    self.lesnik.rect.center = return_pos
+                    self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
+                    self.rifle_attached = True
+                    
+                    # Make him face forward/down
+                    self.lesnik.direction = pygame.Vector2(0, 1)
+                    self.lesnik.state = "idle_front"
+                    self.lesnik.frame_index = 0
+
+                    self.scene_state = "lesnik_returned_with_rifle"
+                    print(f"7 seconds passed. Lesnik returned with rifle and is standing near the door.")
+                    del self.lesnik_at_door_time  # Clean up the timer variable
+            
+        elif self.scene_state == "lesnik_returned_with_rifle":
+            # Lesnik is just standing there with rifle, waiting for dialogue
+            self.dialogue.start([
+                "Friends want to eat... let's go outside, pal."
+            ])
+            self.scene_state = "final_fade_to_black"
+            print("Lesnik with rifle, starting final dialogue.")
+
+        elif self.scene_state == "final_fade_to_black" and not self.dialogue.active:
+            self.fade.start("out", speed=2)
+            self.scene_state = "fade_dark"
+
+        elif self.scene_state == "fade_dark" and not self.fade.active:
+            # Play the gunshot while screen is fully black
+            pygame.mixer.Sound("assets/sfx/shotgun_fire.mp3").play()
+            pygame.time.wait(1500)
+
+            print("Shot fired — transitioning directly to credits.")
+
+            # Hide player completely
+            self.player.rect.center = (-9999, -9999)
+            self.player.image = pygame.Surface((1, 1), pygame.SRCALPHA)
+
+            # Move Lesnik back to table and change to eating sprite
+            table_position = (410 * self.map.scale_x, 140 * self.map.scale_y)
+            self.lesnik.rect.center = table_position
+            self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_front/0.png").convert_alpha()
+            self.lesnik.state = "eating"
+            self.lesnik.frame_index = 0
+
+            # Initialize credits data
+            self.credits_lines = [
+                "A Tale of the Woods",
+                "Developed by Temirlan Yergazy",
+                "",
+                "Inspired by folklore and silence...",
+                "",
+                "Thank you for playing."
+            ]
+            self.credits_font = pygame.font.Font(None, 36)
+            self.credits_start_time = pygame.time.get_ticks()
+
+            pygame.mixer.music.load("assets/music/outro_theme.mp3")
+            pygame.mixer.music.play()
+            self.credits_music_playing = True
+
+            # Go straight to credits
+            self.scene_state = "credits_scene"
+            self.fade.start("in", speed=2)
+            print("Credits scene initialized immediately after fade to black.")
+
+        elif self.scene_state == "credits_scene":
+            if self.credits_music_playing and not pygame.mixer.music.get_busy():
+                print("Outro finished. Returning to menu.")
+                self.scene_state = "return_to_menu"
+
+        elif self.scene_state == "return_to_menu" and not self.fade.active:
+            return "menu"
 
 
         if getattr(self, "_wants_return_menu", False) and not self.fade.active:
             return "menu"
 
     def update_camera(self):
-        # Center camera on player
         self.camera_offset.x = self.player.rect.centerx - SCREEN_WIDTH // 2
         self.camera_offset.y = self.player.rect.centery - SCREEN_HEIGHT // 2
 
-        # Clamp camera to map boundaries
         self.camera_offset.x = max(0, min(self.camera_offset.x, self.map.width - SCREEN_WIDTH))
         self.camera_offset.y = max(0, min(self.camera_offset.y, self.map.height - SCREEN_HEIGHT))
 
@@ -263,9 +340,8 @@ class Hut:
         self.screen.fill(self.bg_color)
         self.map.draw(self.screen, camera_offset=self.camera_offset)
 
-        # --- Depth-sorted entities ---
         drawables = []
-        carpet_drawables = []  # Separate list for carpet (draw first)
+        carpet_drawables = []
 
         # Add player
         offset_player_rect = self.player.rect.copy()
@@ -292,17 +368,14 @@ class Hut:
                     obj.height * self.map.scale_y
                 )
                 
-                # Check if object is a carpet (always draw below everything)
                 if obj.name and obj.name.lower() == "carpet":
                     carpet_drawables.append((image, obj_rect.bottom, obj_rect))
                 else:
                     drawables.append((image, obj_rect.bottom, obj_rect))
 
-        # Draw carpet first (no sorting needed, always on bottom)
         for image, _, rect in carpet_drawables:
             self.screen.blit(image, rect)
 
-        # Sort and draw everything else
         drawables.sort(key=lambda d: d[1])
         for image, _, rect in drawables:
             self.screen.blit(image, rect)
@@ -311,12 +384,11 @@ class Hut:
         if self.can_interact_with_chair:
             prompt_text = self.prompt_font.render("Press E to sit", True, (255, 255, 255))
             prompt_rect = prompt_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100))
-            # Draw background for better visibility
             bg_rect = prompt_rect.inflate(20, 10)
             pygame.draw.rect(self.screen, (0, 0, 0, 180), bg_rect)
             self.screen.blit(prompt_text, prompt_rect)
 
-        # --- Story choice menu ---
+        # Story choice menu
         if self.scene_state == "story_choice":
             menu_x = SCREEN_WIDTH // 2
             menu_y = SCREEN_HEIGHT // 2 - 40
@@ -328,8 +400,13 @@ class Hut:
                 rect = text.get_rect(center=(menu_x, menu_y + i * line_spacing))
                 self.screen.blit(text, rect)
 
+        # Credits scene
+        if self.scene_state in ["credits_scene", "credits_scene_init"] and self.credits_font:
+            for i, line in enumerate(self.credits_lines):
+                text = self.credits_font.render(line, True, (255, 255, 255))
+                rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 40))
+                self.screen.blit(text, rect)
         
-        # Dialogue, UI, fade
         self.dialogue.draw()
         self.pause_menu.draw()
         self.fade.draw()
