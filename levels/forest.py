@@ -6,11 +6,12 @@ from ui.dialogue import DialogueBox
 from ui.pause_menu import PauseMenu
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from map_loader import Map
+from utils.resource_path import resource_path
 
 class Forest:
     def __init__(self, screen):
         self.screen = screen
-        self.map = Map("assets/maps/forest.tmx")
+        self.map = Map(resource_path("assets/maps/forest.tmx"))
         self.font = pygame.font.SysFont("Arial", 24)
         self.bg_color = ("black")
         self.prompt_font = pygame.font.Font(None, 28)
@@ -25,7 +26,7 @@ class Forest:
         )
 
         # --- Background music ---
-        pygame.mixer.music.load("assets/music/forest_ambience.mp3")
+        pygame.mixer.music.load(resource_path("assets/music/forest_ambience.mp3"))
         pygame.mixer.music.set_volume(1.0)
         pygame.mixer.music.play(-1)  # Loop indefinitely
 
@@ -71,7 +72,7 @@ class Forest:
             ]
         )
         self.dialogue.set_character(
-            pygame.image.load("assets/sprites/player/player_portrait.png").convert_alpha(),
+            pygame.image.load(resource_path("assets/sprites/player/player_portrait.png")).convert_alpha(),
             position="left"
         )
 
@@ -115,7 +116,7 @@ class Forest:
                     "Maybe I can rest there for the night."
                 ])
                 self.dialogue.set_character(
-                    pygame.image.load("assets/sprites/player/player_portrait.png").convert_alpha(),
+                    pygame.image.load(resource_path("assets/sprites/player/player_portrait.png")).convert_alpha(),
                     position="left"
                 )
                 self.door_triggered = True
@@ -126,7 +127,7 @@ class Forest:
                 # check for "E" press to enter
                 if keys[pygame.K_e] and not self.fade.active:
                     pygame.mixer.music.stop()
-                    pygame.mixer.Sound("assets/sfx/door_crackle.mp3").play()
+                    pygame.mixer.Sound(resource_path("assets/sfx/door_crackle.mp3")).play()
                     self.fade.start("out", speed=3)
                     self._wants_transition_hut = True
         else:

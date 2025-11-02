@@ -1,6 +1,7 @@
 import pygame
 import math
 import os
+from utils.resource_path import resource_path
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos):
@@ -37,15 +38,13 @@ class Player(pygame.sprite.Sprite):
     def load_animations(self):
         """Load all animation frames"""
         base_path = "assets/sprites/player/"
-        
-        # Try to load animation frames
-        # Format: player_idle_up.png, player_walk_up_1.png, player_walk_up_2.png, etc.
+
         for key in self.animations.keys():
             state, direction = key.split('_')
-            
+
             if state == 'idle':
                 # Load single idle frame
-                path = f"{base_path}player_idle_{direction}.png"
+                path = resource_path(f"{base_path}player_idle_{direction}.png")
                 if os.path.exists(path):
                     frame = pygame.image.load(path).convert_alpha()
                     frame = pygame.transform.scale(frame, (50, 90))
@@ -54,7 +53,7 @@ class Player(pygame.sprite.Sprite):
                 # Load walk animation frames (try up to 8 frames)
                 frame_num = 1
                 while frame_num <= 8:
-                    path = f"{base_path}player_walk_{direction}_{frame_num}.png"
+                    path = resource_path(f"{base_path}player_walk_{direction}_{frame_num}.png")
                     if os.path.exists(path):
                         frame = pygame.image.load(path).convert_alpha()
                         frame = pygame.transform.scale(frame, (50, 90))
@@ -153,7 +152,7 @@ class Player(pygame.sprite.Sprite):
     def set_sitting(self, sitting: bool):
         self.is_sitting = sitting
         if sitting:
-            self.image = pygame.image.load("assets/sprites/player/sitting.png").convert_alpha()
+            self.image = pygame.image.load(resource_path("assets/sprites/player/sitting.png")).convert_alpha()
             self.image = pygame.transform.scale(self.image, (48, 80))
         else:
             # Return to idle front or whichever makes sense

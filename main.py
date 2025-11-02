@@ -1,9 +1,10 @@
 import pygame
-import sys
+import sys, os
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from levels.main_menu import MainMenu
 from levels.forest import Forest
 from levels.hut import Hut
+from utils.resource_path import resource_path
 
 class SceneManager:
     def __init__(self, screen):
@@ -37,6 +38,7 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Lesnik")
+        pygame.display.set_icon(pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")))
         self.clock = pygame.time.Clock()
         self.running = True
         self.manager = SceneManager(self.screen)
@@ -67,5 +69,15 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    try:
+        game = Game()
+        game.run()
+    except Exception as e:
+        import traceback
+        print("An error occurred.")
+        # You can log it to a file:
+        with open("error_log.txt", "w") as f:
+            f.write(traceback.format_exc())
+        # Or show an in-game popup using pygame
+        pygame.quit()
+        sys.exit()

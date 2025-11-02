@@ -7,17 +7,18 @@ from ui.pause_menu import PauseMenu
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from map_loader import Map
 from settings import FPS
+from utils.resource_path import resource_path
 
 class Hut:
     def __init__(self, screen):
         self.screen = screen
-        self.map = Map("assets/maps/hut.tmx")
+        self.map = Map(resource_path("assets/maps/hut.tmx"))
         self.font = pygame.font.SysFont("Arial", 24)
         self.bg_color = ("black")
         self.prompt_font = pygame.font.Font(None, 28)
         self.fade = Fade(screen, mode="in", speed=1)
 
-        self.rifle_sprite = pygame.image.load("assets/sprites/lesnik/rifle.png").convert_alpha()
+        self.rifle_sprite = pygame.image.load(resource_path("assets/sprites/lesnik/rifle.png")).convert_alpha()
         self.rifle_sprite = pygame.transform.scale(self.rifle_sprite, (10, 48))
         self.rifle_attached = False
         self.rifle_timer = 0
@@ -33,13 +34,13 @@ class Hut:
         self.can_interact_with_chair = False
 
         # --- Hoodie sprite ---
-        self.hoodie_sprite = pygame.image.load("assets/sprites/objects/hoodie.png").convert_alpha()
+        self.hoodie_sprite = pygame.image.load(resource_path("assets/sprites/objects/hoodie.png")).convert_alpha()
         self.hoodie_sprite = pygame.transform.scale(self.hoodie_sprite, (25*2.5, 23*2.5))
         self.hoodie_position = (350 * self.map.scale_x, 170 * self.map.scale_y)
         self.hoodie_visible = False
 
         # --- Plate with meat sprite ---
-        self.plate_sprite = pygame.image.load("assets/sprites/objects/plate.png").convert_alpha()
+        self.plate_sprite = pygame.image.load(resource_path("assets/sprites/objects/plate.png")).convert_alpha()
         self.plate_sprite = pygame.transform.scale(self.plate_sprite, (32, 32))
         self.plate_position = (405 * self.map.scale_x, 123 * self.map.scale_y)
         self.plate_visible = False
@@ -80,7 +81,7 @@ class Hut:
             ]
         )
         self.dialogue.set_character(
-            pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+            pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
             position="left"
         )
 
@@ -160,7 +161,7 @@ class Hut:
                 "Many stories I can tell, should you wish to listen. Many stories..."
             ])
             self.dialogue.set_character(
-                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
                 position="left"
             )
             self.scene_state = "talking_with_lesnik"
@@ -194,7 +195,7 @@ class Hut:
                                 "The wolves come in silence, take what they need, and leave me in peace. We understand one another."
                             ])
                             self.dialogue.set_character(
-                                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                                pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
                                 position="left"
                             )
                         elif choice == "Story 2":
@@ -206,7 +207,7 @@ class Hut:
                                 "No one truly leaves these woods unchanged."
                             ])
                             self.dialogue.set_character(
-                                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                                pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
                                 position="left"
                             )
                         elif choice == "Story 3":
@@ -218,7 +219,7 @@ class Hut:
                                 "Since then, the forest has been quiet, as if content once more."
                             ])
                             self.dialogue.set_character(
-                                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                                pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
                                 position="left"
                             )
 
@@ -229,7 +230,7 @@ class Hut:
             if len(self.stories_heard) < 3:
                 self.scene_state = "story_choice"
             else:
-                pygame.mixer.music.load("assets/sfx/wolf_howl.mp3")
+                pygame.mixer.music.load(resource_path("assets/sfx/wolf_howl.mp3"))
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(1)
                 self.dialogue.start([
@@ -239,7 +240,7 @@ class Hut:
                     "Forgive me, friend...",
                 ])
                 self.dialogue.set_character(
-                    pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                    pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
                     position="left"
                 )
                 self.scene_state = "wolf_event"
@@ -280,7 +281,7 @@ class Hut:
                         return_pos = (self.lesnik.rect.centerx, self.lesnik.rect.centery - 70)
 
                     self.lesnik.rect.center = return_pos
-                    self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
+                    self.lesnik.image = pygame.image.load(resource_path("assets/sprites/lesnik/idle_back/0.png")).convert_alpha()
                     self.rifle_attached = True
                     
                     # Make him face forward/down
@@ -293,7 +294,7 @@ class Hut:
                     del self.lesnik_at_door_time  # Clean up the timer variable
             
         elif self.scene_state == "lesnik_returned_with_rifle":
-            self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_back/0.png").convert_alpha()
+            self.lesnik.image = pygame.image.load(resource_path("assets/sprites/lesnik/idle_back/0.png")).convert_alpha()
             self.lesnik.direction = pygame.Vector2(0, -1)
             self.lesnik.state = "idle_back"
             self.lesnik.frame_index = 0
@@ -303,7 +304,7 @@ class Hut:
                 "Friends want to eat... let's go outside, pal."
             ])
             self.dialogue.set_character(
-                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                pygame.image.load(resource_path("assets/sprites/lesnik/lesnik_portrait.png")).convert_alpha(),
                 position="left"
             )
             self.scene_state = "final_fade_to_black"
@@ -315,7 +316,7 @@ class Hut:
 
         elif self.scene_state == "fade_dark" and not self.fade.active:
             # Play the gunshot while screen is fully black
-            pygame.mixer.Sound("assets/sfx/shotgun_fire.mp3").play()
+            pygame.mixer.Sound(resource_path("assets/sfx/shotgun_fire.mp3")).play()
             pygame.time.wait(1500)
 
             print("Shot fired — transitioning directly to credits.")
@@ -329,7 +330,7 @@ class Hut:
             # Move Lesnik back to table and change to eating sprite
             table_position = (410 * self.map.scale_x, 120 * self.map.scale_y)
             self.lesnik.rect.center = table_position
-            self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_front/0.png").convert_alpha()
+            self.lesnik.image = pygame.image.load(resource_path("assets/sprites/lesnik/idle_front/0.png")).convert_alpha()
             self.lesnik.state = "eating"
             self.lesnik.frame_index = 0
 
@@ -345,7 +346,7 @@ class Hut:
             self.credits_font = pygame.font.Font(None, 36)
             self.credits_start_time = pygame.time.get_ticks()
 
-            pygame.mixer.music.load("assets/music/outro_theme.mp3")
+            pygame.mixer.music.load(resource_path("assets/music/outro_theme.mp3"))
             pygame.mixer.music.play()
             self.credits_music_playing = True
 
@@ -467,7 +468,7 @@ class Hut:
 
             # Draw Lesnik below table via depth sort
             self.rifle_attached = False  # Hide rifle during credits
-            self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_front/0.png").convert_alpha()
+            self.lesnik.image = pygame.image.load(resource_path("assets/sprites/lesnik/idle_front/0.png")).convert_alpha()
             self.lesnik.image = pygame.transform.scale(self.lesnik.image, (49, 87))
 
             drawables = []

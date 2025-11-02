@@ -1,5 +1,6 @@
 import pygame
 import os
+from utils.resource_path import resource_path
 
 class Lesnik(pygame.sprite.Sprite):
     def __init__(self, position, path_points=None, speed=2):
@@ -11,7 +12,7 @@ class Lesnik(pygame.sprite.Sprite):
         self.direction = pygame.Vector2(0, 1)  # Facing down initially
 
         # --- Animation setup ---
-        self.animations = self.load_animations("assets/sprites/lesnik")
+        self.animations = self.load_animations(resource_path("assets/sprites/lesnik"))
         self.state = "idle_front"
         self.frame_index = 0
         self.frame_timer = 0
