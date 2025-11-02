@@ -20,13 +20,13 @@ class Forest:
         self.fog_of_war = FogOfWar(
             (SCREEN_WIDTH, SCREEN_HEIGHT),
             light_radius=200,
-            fog_alpha=250,
+            fog_alpha=230,
             light_gradient=10
         )
 
         # --- Background music ---
         pygame.mixer.music.load("assets/music/forest_ambience.mp3")
-        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.set_volume(1.0)
         pygame.mixer.music.play(-1)  # Loop indefinitely
 
         # --- Door setup ---
@@ -70,6 +70,10 @@ class Forest:
                 "I need to find somewhere to stay for the night."
             ]
         )
+        self.dialogue.set_character(
+            pygame.image.load("assets/sprites/player/player_portrait.png").convert_alpha(),
+            position="left"
+        )
 
         self.pause_menu = PauseMenu(screen, self.font)
 
@@ -110,6 +114,10 @@ class Forest:
                     "This looks like a nice hut.",
                     "Maybe I can rest there for the night."
                 ])
+                self.dialogue.set_character(
+                    pygame.image.load("assets/sprites/player/player_portrait.png").convert_alpha(),
+                    position="left"
+                )
                 self.door_triggered = True
 
             # show prompt only after dialogue is done

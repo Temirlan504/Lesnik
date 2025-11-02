@@ -13,7 +13,7 @@ class SceneManager:
             "forest": Forest,
             "hut": Hut
         }
-        self.current_scene = self.scene_classes["hut"](screen)
+        self.current_scene = self.scene_classes["menu"](screen)
         self._should_quit = False
 
     def update(self, keys, events):

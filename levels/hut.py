@@ -74,10 +74,14 @@ class Hut:
             screen,
             self.font,
             lines=[
-                "Hello Batya. May I come in? It's cold outside.",
-                "Be at home, traveler. I will not deny you anything — not a thing!",
+                "Hello there, traveler.",
+                "Be at home. I will not deny you anything — not a thing!",
                 "Take a seat on the chair, I am preparing dinner."
             ]
+        )
+        self.dialogue.set_character(
+            pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+            position="left"
         )
 
         self.pause_menu = PauseMenu(screen, self.font)
@@ -155,6 +159,10 @@ class Hut:
             self.dialogue.start([
                 "Many stories I can tell, should you wish to listen. Many stories..."
             ])
+            self.dialogue.set_character(
+                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                position="left"
+            )
             self.scene_state = "talking_with_lesnik"
             print("Lesnik reached the table. Starting dialogue.")
         
@@ -185,6 +193,10 @@ class Hut:
                                 "Now, when the snow is deep and the nights are long, I leave meat at the edge of the woods.",
                                 "The wolves come in silence, take what they need, and leave me in peace. We understand one another."
                             ])
+                            self.dialogue.set_character(
+                                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                                position="left"
+                            )
                         elif choice == "Story 2":
                             self.dialogue.start([
                                 "On certain nights, the wind carries strange sounds through the pines.",
@@ -193,6 +205,10 @@ class Hut:
                                 "Yet by dawn, they are gone. The forest calls them back, one way or another.",
                                 "No one truly leaves these woods unchanged."
                             ])
+                            self.dialogue.set_character(
+                                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                                position="left"
+                            )
                         elif choice == "Story 3":
                             self.dialogue.start([
                                 "Once, there was a hunter who fancied himself the master of this place.",
@@ -201,6 +217,10 @@ class Hut:
                                 "When spring came, I found his hat hanging on a branch — not a mark of blood upon it.",
                                 "Since then, the forest has been quiet, as if content once more."
                             ])
+                            self.dialogue.set_character(
+                                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                                position="left"
+                            )
 
                         self.scene_state = "telling_story"
                         print(f"Started {choice}")
@@ -213,9 +233,15 @@ class Hut:
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(1)
                 self.dialogue.start([
-                    "Suddenly, outside the hut, a chilling howl pierces the air...",
-                    "Forgive me, my friend..."
+                    "Suddenly, outside the hut, a chilling howl pierces the air..."
                 ])
+                self.dialogue.start([
+                    "Forgive me, friend...",
+                ])
+                self.dialogue.set_character(
+                    pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                    position="left"
+                )
                 self.scene_state = "wolf_event"
                 print("All stories told. Wolf event triggered.")
 
@@ -276,6 +302,10 @@ class Hut:
             self.dialogue.start([
                 "Friends want to eat... let's go outside, pal."
             ])
+            self.dialogue.set_character(
+                pygame.image.load("assets/sprites/lesnik/lesnik_portrait.png").convert_alpha(),
+                position="left"
+            )
             self.scene_state = "final_fade_to_black"
             print("Lesnik with rifle, starting final dialogue.")
 
@@ -306,11 +336,11 @@ class Hut:
             # Initialize credits data
             self.credits_lines = [
                 "A Tale of the Woods",
-                "Developed by Temirlan Yergazy",
+                "Inspired by the 'King and Jester' - song 'Lesnik'",
                 "",
-                "Inspired by folklore and silence...",
+                "Developed by Obelus STEM (YouTube)",
                 "",
-                "Thank you for playing."
+                "If you liked the game, consider supporting me on YouTube!",
             ]
             self.credits_font = pygame.font.Font(None, 36)
             self.credits_start_time = pygame.time.get_ticks()

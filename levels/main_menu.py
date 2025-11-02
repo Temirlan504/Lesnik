@@ -37,6 +37,9 @@ class MainMenu:
     def draw(self):
         self.screen.fill((0, 0, 0))
         title = self.font.render("Lesnik", True, (200, 0, 0))
+        # Change title size
+        title = pygame.transform.scale(title, (title.get_width() * 2, title.get_height() * 2))
+        
         self.screen.blit(title, (self.screen.get_width()//2 - title.get_width()//2, 100))
 
         for i, option in enumerate(self.options):
