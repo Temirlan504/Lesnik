@@ -15,13 +15,13 @@ class Hut:
         self.font = pygame.font.SysFont("Arial", 24)
         self.bg_color = ("black")
         self.prompt_font = pygame.font.Font(None, 28)
-
         self.fade = Fade(screen, mode="in", speed=1)
 
         self.rifle_sprite = pygame.image.load("assets/sprites/lesnik/rifle.png").convert_alpha()
         self.rifle_sprite = pygame.transform.scale(self.rifle_sprite, (10, 48))
         self.rifle_attached = False
         self.rifle_timer = 0
+
         self.credits_music_playing = False
         self.credits_start_time = 0  # Initialize here
         self.credits_lines = []  # Initialize here
@@ -31,6 +31,18 @@ class Hut:
         self.kitchen_target = (250 * self.map.scale_x, 140 * self.map.scale_y)
         self.lesnik_waiting = False
         self.can_interact_with_chair = False
+
+        # --- Hoodie sprite ---
+        self.hoodie_sprite = pygame.image.load("assets/sprites/objects/hoodie.png").convert_alpha()
+        self.hoodie_sprite = pygame.transform.scale(self.hoodie_sprite, (25*2.5, 23*2.5))
+        self.hoodie_position = (350 * self.map.scale_x, 170 * self.map.scale_y)
+        self.hoodie_visible = False
+
+        # --- Plate with meat sprite ---
+        self.plate_sprite = pygame.image.load("assets/sprites/objects/plate.png").convert_alpha()
+        self.plate_sprite = pygame.transform.scale(self.plate_sprite, (32, 32))
+        self.plate_position = (405 * self.map.scale_x, 123 * self.map.scale_y)
+        self.plate_visible = False
 
         # Player spawn setup
         player_obj = self.map.get_object("Player")
@@ -278,7 +290,9 @@ class Hut:
 
             print("Shot fired — transitioning directly to credits.")
 
-            # Hide player completely
+            # Hide player completely and add hoodie sprite
+            self.hoodie_visible = True
+            self.plate_visible = True
             self.player.rect.center = (-9999, -9999)
             self.player.image = pygame.Surface((1, 1), pygame.SRCALPHA)
 
@@ -317,7 +331,6 @@ class Hut:
 
         elif self.scene_state == "return_to_menu" and not self.fade.active:
             return "menu"
-
 
         if getattr(self, "_wants_return_menu", False) and not self.fade.active:
             return "menu"
@@ -426,6 +439,7 @@ class Hut:
             self.rifle_attached = False  # Hide rifle during credits
             self.lesnik.image = pygame.image.load("assets/sprites/lesnik/idle_front/0.png").convert_alpha()
             self.lesnik.image = pygame.transform.scale(self.lesnik.image, (49, 87))
+
             drawables = []
 
             # Collect all map objects again (for depth order)
@@ -453,11 +467,28 @@ class Hut:
             for image, _, rect in drawables:
                 self.screen.blit(image, rect)
 
+            # Draw hoodie sprite if visible
+            if self.hoodie_visible:
+                hoodie_rect = self.hoodie_sprite.get_rect()
+                hoodie_rect.topleft = (
+                    self.hoodie_position[0] - cinematic_offset.x,
+                    self.hoodie_position[1] - cinematic_offset.y
+                )
+                self.screen.blit(self.hoodie_sprite, hoodie_rect)
+
+            # Draw plate sprite if visible
+            if self.plate_visible:
+                plate_rect = self.plate_sprite.get_rect()
+                plate_rect.topleft = (
+                    self.plate_position[0] - cinematic_offset.x,
+                    self.plate_position[1] - cinematic_offset.y
+                )
+                self.screen.blit(self.plate_sprite, plate_rect)
 
             # Draw credits text
             for i, line in enumerate(self.credits_lines):
                 text = self.credits_font.render(line, True, (255, 255, 255))
-                rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 40))
+                rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + i * 40 - 60))
                 self.screen.blit(text, rect)
 
             # Cinematic letterboxing

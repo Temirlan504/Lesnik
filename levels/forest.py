@@ -24,6 +24,11 @@ class Forest:
             light_gradient=10
         )
 
+        # --- Background music ---
+        pygame.mixer.music.load("assets/music/forest_ambience.mp3")
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)  # Loop indefinitely
+
         # --- Door setup ---
         door_obj = self.map.get_object("Door")
         self.door_triggered = False
@@ -112,6 +117,8 @@ class Forest:
                 self.show_door_prompt = True
                 # check for "E" press to enter
                 if keys[pygame.K_e] and not self.fade.active:
+                    pygame.mixer.music.stop()
+                    pygame.mixer.Sound("assets/sfx/door_crackle.mp3").play()
                     self.fade.start("out", speed=3)
                     self._wants_transition_hut = True
         else:
@@ -119,7 +126,6 @@ class Forest:
 
         if getattr(self, "_wants_transition_hut", False) and not self.fade.active:
             return "hut"
-
 
     def update_camera(self):
         # Center camera on player
